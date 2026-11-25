@@ -145,7 +145,7 @@ const server = http.createServer((req, res) => {
     return;
   }
   // berkas statis: hanya daftar putih yang boleh terlayani
-  const STATIC_OK = ['/', '/index.html', '/style.css', '/game.js'];
+  const STATIC_OK = ['/', '/index.html', '/style.css', '/game.js', '/satellite.jpg'];
   if (!STATIC_OK.includes(url.pathname)) {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     return res.end('Tidak ditemukan');
@@ -168,7 +168,8 @@ const server = http.createServer((req, res) => {
 });
 
 // ---------------------------------------------------------------- permainan
-const WORLD = { minX: -380, maxX: 580, minZ: -380, maxZ: 930 };
+// Batas dunia = extent tekstur satelit (x -920.3..1063.3, z -880.7..1240.6) dikurangi margin 15 m
+const WORLD = { minX: -905, maxX: 1048, minZ: -865, maxZ: 1225 };
 const clampWorld = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const players = new Map(); // id -> {id,name,x,z,rot,anim,npc,ws}

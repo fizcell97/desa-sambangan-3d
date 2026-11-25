@@ -151,7 +151,7 @@ renderer.setSize(innerWidth, innerHeight);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x8ec9ee);
-scene.fog = new THREE.Fog(0x8ec9ee, 220, 900);
+scene.fog = new THREE.Fog(0x8ec9ee, 260, 2400);
 
 const camera = new THREE.PerspectiveCamera(58, innerWidth / innerHeight, 0.1, 3000);
 
@@ -213,15 +213,71 @@ function papanNama(teks, lebar, tinggi, bg, fg) {
   return new THREE.Mesh(new THREE.PlaneGeometry(lebar, tinggi), mat);
 }
 
+// Label nama jalan: pelat datar di atas permukaan jalan, sejajar arah jalan,
+// teks putih di atas latar gelap semi-transparan — terbaca dari udara maupun dari belakang pemain.
+function labelJalanMesh(teks) {
+  const font = 'bold 92px Arial';
+  const c = document.createElement('canvas');
+  const ukur = c.getContext('2d');
+  ukur.font = font;
+  c.width = Math.ceil(ukur.measureText(teks).width) + 96;
+  c.height = 152;
+  const g = c.getContext('2d');
+  g.fillStyle = 'rgba(16,18,24,0.58)';
+  if (g.roundRect) {
+    g.beginPath(); g.roundRect(4, 4, c.width - 8, c.height - 8, 36); g.fill();
+  } else {
+    g.fillRect(4, 4, c.width - 8, c.height - 8);
+  }
+  g.font = font; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillStyle = '#ffffff';
+  g.fillText(teks, c.width / 2, c.height / 2 + 4);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  const TINGGI = 8; // meter di dunia
+  const geo = new THREE.PlaneGeometry(TINGGI * (c.width / c.height), TINGGI);
+  geo.rotateX(-Math.PI / 2);
+  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+}
+
+function buatLabelJalan(roads) {
+  for (const r of roads) {
+    if (!r.n) continue;
+    // segmen terpanjang yang titik tengahnya aman di dalam dunia
+    let best = null;
+    for (let i = 0; i < r.p.length - 1; i++) {
+      const [x1, z1] = r.p[i], [x2, z2] = r.p[i + 1];
+      const mx = (x1 + x2) / 2, mz = (z1 + z2) / 2;
+      if (mx < DUNIA.minX + 40 || mx > DUNIA.maxX - 40 || mz < DUNIA.minZ + 40 || mz > DUNIA.maxZ - 40) continue;
+      const len = Math.hypot(x2 - x1, z2 - z1);
+      if (!best || len > best.len) best = { len, mx, mz, dx: x2 - x1, dz: z2 - z1 };
+    }
+    if (!best || best.len < 18) continue;
+    let { dx, dz } = best;
+    if (dx < 0) { dx = -dx; dz = -dz; } // teks selalu membaca ke arah timur
+    const mesh = labelJalanMesh(r.n);
+    mesh.rotation.y = -Math.atan2(dz, dx);
+    mesh.position.set(best.mx, 0.1, best.mz);
+    scene.add(mesh);
+  }
+}
+
 // ------------------------------------------------------------ pembangunan dunia
-const BATAS = { minX: -420, maxX: 620, minZ: -420, maxZ: 980 };
+// Extent dunia = extent tekstur satelit (ubinan Esri z18 yang dijahit ke satellite.jpg),
+// dikonversi dari batas lat/lon ubinan dengan proyeksi lokal village.json:
+//   x = (lon - 114.7646) * 111108.42 ; z = (-3.5255 - lat) * 110540.40
+const DUNIA = { minX: -920.3, maxX: 1063.3, minZ: -880.7, maxZ: 1240.6 };
+const BATAS = { minX: DUNIA.minX, maxX: DUNIA.maxX, minZ: DUNIA.minZ, maxZ: DUNIA.maxZ };
+// Batas gerak pemain: seluruh dunia bertekstur, margin 15 m dari tepi
+const TEPI = { minX: -905, maxX: 1048, minZ: -865, maxZ: 1225 };
 const diDalam = (x, z) => x > BATAS.minX && x < BATAS.maxX && z > BATAS.minZ && z < BATAS.maxZ;
 
-function geometriPita(daftarJalur, lebarDefault, warnaAir) {
+function geometriPita(daftarJalur, lebarDefault, bonusLebar = 0) {
   const pos = [];
   for (const jalur of daftarJalur) {
     const pts = jalur.p;
-    const w = (jalur.w || lebarDefault) / 2;
+    const w = (jalur.w || lebarDefault) / 2 + bonusLebar;
     for (let i = 0; i < pts.length - 1; i++) {
       const [x1, z1] = pts[i], [x2, z2] = pts[i + 1];
       if (!diDalam(x1, z1) && !diDalam(x2, z2)) continue;
@@ -240,7 +296,7 @@ function geometriPita(daftarJalur, lebarDefault, warnaAir) {
 }
 
 const WARNA_DINDING = [0xf5e9c9, 0xf2d5b8, 0xdcebf5, 0xe6f2dc, 0xf7dede, 0xfff6e0, 0xe8e0f0, 0xd9efe8];
-const WARNA_ATAP = [0xb5502f, 0x8a5a3b, 0x707a82, 0x9c4030, 0x6b7f59];
+const WARNA_ATAP = [0xb5502f, 0x9c4030, 0xa0522d, 0x8a5a3b, 0x77543a, 0x707a82, 0x5f6a72, 0x7d7468, 0x6b7f59, 0x4f6152];
 const matDinding = WARNA_DINDING.map((c) => new THREE.MeshLambertMaterial({ color: c }));
 const matAtap = WARNA_ATAP.map((c) => new THREE.MeshLambertMaterial({ color: c }));
 
@@ -254,31 +310,51 @@ function geometriAtap() {
 
 let titikJalan = [];
 function bangunDunia(data) {
-  // tanah
+  // tanah: citra satelit nyata (Esri World Imagery) yang tepi-tepinya persis DUNIA,
+  // sehingga bangunan/jalan 3D jatuh tepat di atas padanannya di foto satelit
+  const texTanah = new THREE.TextureLoader().load('/satellite.jpg');
+  texTanah.colorSpace = THREE.SRGBColorSpace;
+  texTanah.anisotropy = renderer.capabilities.getMaxAnisotropy();
   const tanah = new THREE.Mesh(
-    new THREE.PlaneGeometry(1900, 2100),
-    new THREE.MeshLambertMaterial({ color: 0x79b657 })
+    new THREE.PlaneGeometry(DUNIA.maxX - DUNIA.minX, DUNIA.maxZ - DUNIA.minZ),
+    new THREE.MeshLambertMaterial({ map: texTanah })
   );
   tanah.rotation.x = -Math.PI / 2;
-  tanah.position.set(100, -0.05, 280);
+  tanah.position.set((DUNIA.minX + DUNIA.maxX) / 2, 0, (DUNIA.minZ + DUNIA.maxZ) / 2);
   scene.add(tanah);
 
-  // jalan
+  // jalan: pita mengikuti poliline OSM di atas foto satelit —
+  // lapisan tepi terang (sedikit lebih lebar) di bawah permukaan aspal/tanah per kelas
   titikJalan = [];
   for (const r of data.roads) for (const p of r.p) if (diDalam(p[0], p[1])) titikJalan.push(p);
-  const jalan = new THREE.Mesh(
-    geometriPita(data.roads, 4),
-    new THREE.MeshLambertMaterial({ color: 0x5c5c60 })
+  const bukanTrack = data.roads.filter((r) => r.t !== 'track');
+  const track = data.roads.filter((r) => r.t === 'track');
+  const tepiJalan = new THREE.Mesh(
+    geometriPita(bukanTrack, 4, 0.7),
+    new THREE.MeshLambertMaterial({ color: 0xb7b0a1, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 })
   );
-  jalan.position.y = 0.03;
-  scene.add(jalan);
+  tepiJalan.position.y = 0.05;
+  scene.add(tepiJalan);
+  const aspal = new THREE.Mesh(
+    geometriPita(bukanTrack, 4),
+    new THREE.MeshLambertMaterial({ color: 0x3f3f44, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
+  );
+  aspal.position.y = 0.07;
+  scene.add(aspal);
+  const jalanTanah = new THREE.Mesh(
+    geometriPita(track, 3),
+    new THREE.MeshLambertMaterial({ color: 0x8a6f4d, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 })
+  );
+  jalanTanah.position.y = 0.06;
+  scene.add(jalanTanah);
+  buatLabelJalan(data.roads);
 
   // air
   const airTerbuka = data.waters.filter((w) => !w.closed);
   const airTertutup = data.waters.filter((w) => w.closed);
   if (airTerbuka.length) {
     const air = new THREE.Mesh(geometriPita(airTerbuka, 7), new THREE.MeshLambertMaterial({ color: 0x3f8fd2 }));
-    air.position.y = 0.02;
+    air.position.y = 0.04;
     scene.add(air);
   }
   for (const wtr of airTertutup) {
@@ -287,7 +363,7 @@ function bangunDunia(data) {
     wtr.p.forEach(([x, z], i) => (i ? shape.lineTo(x, -z) : shape.moveTo(x, -z)));
     const mesh = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshLambertMaterial({ color: 0x3f8fd2 }));
     mesh.rotation.x = -Math.PI / 2;
-    mesh.position.y = 0.02;
+    mesh.position.y = 0.04;
     scene.add(mesh);
   }
 
@@ -332,15 +408,16 @@ function bangunDunia(data) {
   data.buildings.forEach((b, i) => {
     if (terpakai.has(i)) return;
     const h = hashNama('b' + i);
+    const hB = b.h * (0.94 + (h % 13) * 0.01); // variasi tinggi halus ±6%, deterministik
     const rumah = new THREE.Group();
     const badan = new THREE.Mesh(geoKotak, matDinding[h % matDinding.length]);
-    badan.scale.set(b.w, b.h, b.d);
+    badan.scale.set(b.w, hB, b.d);
     rumah.add(badan);
     const atap = new THREE.Mesh(geoAtap, matAtap[h % matAtap.length]);
     const memanjang = b.w >= b.d;
-    atap.scale.set(memanjang ? b.d : b.w, b.h * 0.55 + 1.2, memanjang ? b.w : b.d);
+    atap.scale.set(memanjang ? b.d : b.w, hB * 0.55 + 1.2, memanjang ? b.w : b.d);
     if (memanjang) atap.rotation.y = Math.PI / 2;
-    atap.position.y = b.h;
+    atap.position.y = hB;
     rumah.add(atap);
     rumah.position.set(b.c[0], 0, b.c[1]);
     scene.add(rumah);
@@ -354,7 +431,7 @@ function bangunDunia(data) {
       kanopi.rotation.x = -0.28;
       rumah.add(kanopi);
       const label = buatLabel('WARUNG', 4.6, '#ffd94d');
-      label.position.set(0, b.h + 3.4, 0);
+      label.position.set(0, hB + 3.4, 0);
       rumah.add(label);
     }
   });
@@ -722,8 +799,8 @@ function langkah() {
     const sin = Math.sin(camYaw), cos = Math.cos(camYaw);
     const mx = (ix * cos - iz * sin) * kecepatan * dt;
     const mz = (ix * sin + iz * cos) * kecepatan * dt;
-    saya.x = THREE.MathUtils.clamp(saya.x + mx, -380, 580);
-    saya.z = THREE.MathUtils.clamp(saya.z + mz, -380, 930);
+    saya.x = THREE.MathUtils.clamp(saya.x + mx, TEPI.minX, TEPI.maxX);
+    saya.z = THREE.MathUtils.clamp(saya.z + mz, TEPI.minZ, TEPI.maxZ);
     const targetRot = Math.atan2(mx, mz);
     let dr = targetRot - saya.rot;
     while (dr > Math.PI) dr -= Math.PI * 2;
@@ -770,6 +847,10 @@ window.__desa = {
   get myPos() { return { x: saya.x, z: saya.z }; },
   get playerCount() { return avatars.size + (myId ? 1 : 0); },
   get ready() { return desaReady; },
+  scene, camera,
+  teleport(x, z) { saya.x = x; saya.z = z; },
+  setCam(yaw, pitch, jarak) { camYaw = yaw; camPitch = pitch; camJarak = jarak; },
+  setFog(aktif) { scene.fog = aktif ? new THREE.Fog(0x8ec9ee, 260, 2400) : null; },
 };
 
 // ------------------------------------------------------------ mulai
