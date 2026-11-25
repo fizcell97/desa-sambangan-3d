@@ -1,0 +1,1 @@
+{"dependencies":{"ws":"^8.18.0"},"description":"Desa Sambangan 3D — Simulator Multiplayer (Tahap 1)","main":"server.js","name":"desa-sambangan-3d","scripts":{"start":"node server.js","test:bots":"node test/bots.mjs"},"type":"commonjs","version":"1.0.0"}

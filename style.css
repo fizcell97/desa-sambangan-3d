@@ -1,0 +1,115 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: #87bfe8;
+  color: #1c2b1a;
+}
+#kanvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.tersembunyi { display: none !important; }
+
+/* ===== Layar masuk ===== */
+#layar-masuk {
+  position: fixed; inset: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #7ec3ee 0%, #a8d89a 78%, #8fce7d 100%);
+  padding: 16px;
+}
+.kartu-masuk {
+  background: rgba(255,255,255,.96);
+  border-radius: 18px;
+  box-shadow: 0 14px 44px rgba(20,60,20,.28);
+  padding: 26px 26px 20px;
+  width: min(400px, 100%);
+  max-height: 94vh; overflow-y: auto;
+}
+.kartu-masuk h1 { font-size: 26px; text-align: center; color: #1d6b2a; }
+.subjudul { text-align: center; color: #55705a; font-size: 13px; margin: 4px 0 18px; }
+.tab-masuk { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab-masuk button {
+  flex: 1; padding: 10px; border-radius: 10px; border: 2px solid #2e9e44;
+  background: #fff; color: #2e9e44; font-weight: 700; font-size: 15px; cursor: pointer;
+}
+.tab-masuk button.aktif { background: #2e9e44; color: #fff; }
+.form-masuk label { display: block; font-size: 13px; font-weight: 600; color: #39543d; margin-bottom: 12px; }
+.form-masuk input {
+  width: 100%; margin-top: 5px; padding: 11px 12px; font-size: 15px;
+  border: 1.5px solid #b9cdbd; border-radius: 10px; outline: none; background: #fbfefb;
+}
+.form-masuk input:focus { border-color: #2e9e44; }
+.tombol-utama {
+  width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+  background: #2e9e44; color: #fff; font-size: 16px; font-weight: 700; margin-top: 2px;
+}
+.tombol-utama:hover { background: #268639; }
+.tombol-utama:disabled { background: #9dbfa4; cursor: wait; }
+.pesan { min-height: 20px; margin-top: 12px; font-size: 13.5px; text-align: center; color: #b03030; }
+.pesan.ok { color: #1d7a2c; }
+.catatan { font-size: 12px; color: #6a7f6e; text-align: center; margin-top: 6px; line-height: 1.5; }
+
+/* ===== HUD ===== */
+#hud { position: fixed; inset: 0; z-index: 10; pointer-events: none; }
+#hud button, #hud input, #kotak-chat { pointer-events: auto; }
+
+#panel-pemain {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(255,255,255,.88); border-radius: 12px; padding: 9px 12px;
+  max-width: 210px; box-shadow: 0 3px 12px rgba(0,0,0,.18); font-size: 13px;
+}
+.judul-panel { font-weight: 700; color: #1d6b2a; margin-bottom: 4px; }
+#daftar-pemain { list-style: none; max-height: 30vh; overflow-y: auto; }
+#daftar-pemain li { padding: 1.5px 0; color: #2c4630; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#daftar-pemain li.npc { color: #7a6a3a; }
+#daftar-pemain li.saya { font-weight: 700; color: #0b5cad; }
+
+#panel-atas-kanan { position: absolute; top: 10px; right: 10px; }
+#tombol-keluar {
+  padding: 8px 14px; border: none; border-radius: 10px; cursor: pointer;
+  background: rgba(200,50,40,.92); color: #fff; font-weight: 700; font-size: 13.5px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.2);
+}
+
+#petunjuk {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(20,35,22,.62); color: #eaf5ea; border-radius: 999px;
+  padding: 6px 14px; font-size: 12px; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis;
+}
+
+#kotak-chat {
+  position: absolute; left: 10px; bottom: 10px; width: min(340px, 78vw);
+  background: rgba(255,255,255,.9); border-radius: 12px; box-shadow: 0 3px 12px rgba(0,0,0,.2);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#isi-chat { height: 118px; overflow-y: auto; padding: 7px 10px; font-size: 13px; line-height: 1.45; }
+#isi-chat .dari { font-weight: 700; color: #1d6b2a; }
+#isi-chat .sistem { color: #888; font-style: italic; }
+#form-chat { display: flex; border-top: 1px solid #d8e4d8; }
+#input-chat { flex: 1; border: none; padding: 9px 10px; font-size: 13.5px; outline: none; background: transparent; min-width: 0; }
+#form-chat button {
+  border: none; background: #2e9e44; color: #fff; font-weight: 700; padding: 0 14px; cursor: pointer; font-size: 13.5px;
+}
+
+#status-muat {
+  position: absolute; bottom: 12px; right: 12px;
+  background: rgba(20,35,22,.7); color: #fff; padding: 7px 12px; border-radius: 10px; font-size: 12.5px;
+}
+
+/* Joystick virtual (HP) */
+#joystick {
+  position: absolute; left: 18px; bottom: 190px; width: 112px; height: 112px;
+  border-radius: 50%; background: rgba(255,255,255,.28); border: 2px solid rgba(255,255,255,.55);
+  display: none; pointer-events: auto; touch-action: none;
+}
+#joystick-tombol {
+  position: absolute; left: 50%; top: 50%; width: 50px; height: 50px; border-radius: 50%;
+  background: rgba(255,255,255,.75); transform: translate(-50%,-50%);
+}
+body.sentuh #joystick { display: block; }
+body.sentuh #petunjuk { display: none; }
+body.sentuh #kotak-chat { bottom: 10px; width: min(300px, 62vw); }
+body.sentuh #isi-chat { height: 84px; }
+
+@media (max-width: 640px) {
+  #panel-pemain { max-width: 160px; font-size: 12px; }
+  .kartu-masuk h1 { font-size: 22px; }
+}

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Desa Sambangan 3D — Simulator Multiplayer</title>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- ===== Layar masuk ===== -->
+<div id="layar-masuk">
+  <div class="kartu-masuk">
+    <h1>🏡 Desa Sambangan 3D</h1>
+    <p class="subjudul">Simulator Multiplayer — Sambangan, Bati Bati, Tanah Laut</p>
+
+    <div class="tab-masuk">
+      <button id="tab-login" class="aktif" type="button">Masuk</button>
+      <button id="tab-daftar" type="button">Daftar</button>
+    </div>
+
+    <form id="form-login" class="form-masuk">
+      <label>Nama pengguna
+        <input id="login-username" type="text" autocomplete="username" maxlength="16" placeholder="mis. nafis97">
+      </label>
+      <label>Kata sandi
+        <input id="login-password" type="password" autocomplete="current-password" placeholder="Kata sandi kamu">
+      </label>
+      <button type="submit" class="tombol-utama">Masuk ke Desa</button>
+    </form>
+
+    <form id="form-daftar" class="form-masuk tersembunyi">
+      <label>Nama pengguna
+        <input id="daftar-username" type="text" autocomplete="username" maxlength="16" placeholder="3–16 huruf/angka/_">
+      </label>
+      <label>Kata sandi
+        <input id="daftar-password" type="password" autocomplete="new-password" placeholder="Minimal 6 karakter">
+      </label>
+      <button type="submit" class="tombol-utama">Daftar &amp; Masuk</button>
+    </form>
+
+    <p id="pesan-masuk" class="pesan"></p>
+    <p class="catatan">Daftar dulu, lalu masuk dan jalan-jalan keliling desa. Kamu bisa bertemu pemain lain dan warga desa secara langsung.</p>
+  </div>
+</div>
+
+<!-- ===== HUD permainan ===== -->
+<div id="hud" class="tersembunyi">
+  <div id="panel-pemain">
+    <div class="judul-panel">🌐 Di desa sekarang: <span id="jumlah-pemain">0</span></div>
+    <ul id="daftar-pemain"></ul>
+  </div>
+
+  <div id="panel-atas-kanan">
+    <button id="tombol-keluar" type="button">Keluar</button>
+  </div>
+
+  <div id="petunjuk">
+    <b>WASD / panah</b> jalan &nbsp;•&nbsp; <b>Seret</b> putar kamera &nbsp;•&nbsp; <b>Scroll</b> zoom &nbsp;•&nbsp; <b>Shift</b> lari &nbsp;•&nbsp; <b>Enter</b> chat
+  </div>
+
+  <div id="kotak-chat">
+    <div id="isi-chat"></div>
+    <form id="form-chat">
+      <input id="input-chat" type="text" maxlength="200" placeholder="Tulis pesan… (Enter untuk kirim)" autocomplete="off">
+      <button type="submit">Kirim</button>
+    </form>
+  </div>
+
+  <div id="joystick"><div id="joystick-tombol"></div></div>
+  <div id="status-muat">Memuat desa…</div>
+</div>
+
+<canvas id="kanvas"></canvas>
+
+<script type="module" src="game.js"></script>
+</body>
+</html>
